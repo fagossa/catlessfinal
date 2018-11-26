@@ -8,5 +8,12 @@ lazy val root = (project in file(".")).
       version      := "0.1.0-SNAPSHOT"
     )),
     name := "catless",
-    libraryDependencies += scalaTest % Test
+    libraryDependencies ++= Seq(
+      "org.typelevel"  %% "cats-effect"   % "1.0.0",
+      "org.tpolecat"   %% "doobie-core"   % "0.6.0",
+      "org.tpolecat"   %% "doobie-h2"     % "0.6.0",
+      scalaTest        % Test
+    )
   )
+
+scalacOptions += "-Ypartial-unification"
