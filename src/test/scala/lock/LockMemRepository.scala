@@ -3,7 +3,7 @@ package lock
 import java.util.UUID
 
 import cats.Id
-import scala.collection.mutable.{Map => MutableMap}
+import scala.collection.mutable.{ Map => MutableMap }
 
 object LockMemRepository extends LockRepositoryAlg[Id] {
   private val mem = MutableMap.empty[UUID, Lock]

@@ -1,1 +1,1 @@
-# arrow_vs_cats
+# Cat + cats-effect in finally tagless

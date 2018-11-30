@@ -15,5 +15,6 @@ lazy val root = (project in file(".")).
       scalaTest        % Test
     )
   )
+  .settings(Scalariform.settings)
 
 scalacOptions += "-Ypartial-unification"
