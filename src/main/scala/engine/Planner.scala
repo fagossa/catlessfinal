@@ -5,9 +5,7 @@ import java.time.Duration
 import ride.models.Point
 
 class Planner() {
-
   def execute(request: PlannerRequest): PlannerChannel = ???
-
 }
 
 trait PlannerChannel {

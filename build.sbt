@@ -5,16 +5,20 @@ lazy val root = (project in file(".")).
     inThisBuild(List(
       organization := "com.example",
       scalaVersion := "2.12.7",
-      version      := "0.1.0-SNAPSHOT"
+      version := "0.1.0-SNAPSHOT"
     )),
     name := "catless",
     libraryDependencies ++= Seq(
-      "org.typelevel"  %% "cats-effect"   % "1.0.0",
-      "org.tpolecat"   %% "doobie-core"   % "0.6.0",
-      "org.tpolecat"   %% "doobie-h2"     % "0.6.0",
-      scalaTest        % Test
+      catsEffect,
+      scalaTest % Test
     )
   )
-  .settings(Scalariform.settings)
-
-scalacOptions += "-Ypartial-unification"
+  .settings(
+    fork in run := true,
+    scalafmtOnCompile := true,
+    scalacOptions ++= Seq(
+      /*"-Xlog-implicits", */
+      "-Ypartial-unification",
+      "-language:higherKinds"
+    )
+  )

@@ -12,34 +12,36 @@ trait LockRepositoryAlg[F[_]] {
   def disable(id: LockId): F[Unit]
 }
 
-import doobie.implicits._
-import doobie.util.transactor.Transactor
+// TODO: implement a Ref: https://github.com/typelevel/cats-effect/blob/master/site/src/main/tut/concurrency/ref.md
+import cats.effect.concurrent.Ref
 import cats.effect.Sync
+class FileLockRepository[F[_]](implicit F: Sync[F]) extends LockRepositoryAlg[F] {
 
-class LockPostgreRepository[F[_]](xa: Transactor[F])(implicit F: Sync[F]) extends LockRepositoryAlg[F] {
-
-  override def findAll: F[List[Lock]] = /*sql"select id, open from locks"
-    .query[Lock]
-    .to[List]
-    .transact(xa)*/
-    ???
-
-  // TODO: implement!!!
-  override def find(id: LockId): F[Option[Lock]] = F.pure(None)
-  override def save(lock: Lock): F[Unit] = F.unit
-  override def disable(id: LockId): F[Unit] = F.unit
-}
-
-class BikeRenting[F[_]](lockRepo: LockRepositoryAlg[F])(implicit F: Sync[F]) {
-  def rentBike(lockId: LockId): F[Either[String, Unit]] = {
-    F.flatMap(lockRepo.find(lockId)) {
-      case Some(lock: Lock) =>
-        val updatedLock: Lock = lock.copy(open = true)
-        F.flatMap(lockRepo.save(updatedLock)) { _ =>
-          F.pure(Right(()))
-        }
-      case None =>
-        F.pure(Left("Lock not found"))
-    }
+  private def fromCsv(line: String): Option[Lock] = {
+    // TODO: implement
+    Option(Lock(???, ???))
   }
+
+  // TODO: extract the file content to another concept
+  override def findAll: F[List[Lock]] = {
+    import java.io.{BufferedReader, File, FileReader}
+    val acquire: F[BufferedReader] = F.delay {
+      val file = new File(getClass.getClassLoader.getResource("locks.txt").getFile)
+      new BufferedReader(new FileReader(file))
+    }
+
+    F.bracket(acquire) { br =>
+      import java.util.stream.Collectors
+      import scala.collection.JavaConverters._
+      import cats.implicits._
+      br.lines.collect(Collectors.toList).asScala.toList.flatMap(fromCsv(_)).pure[F]
+    }(br => F.delay(br.close()))
+  }
+
+  import cats.syntax.functor._
+  override def find(id: LockId): F[Option[Lock]] = findAll.map(_.find(_.id == id))
+
+  override def save(lock: Lock): F[Unit] = F.unit // TODO: implement?
+
+  override def disable(id: LockId): F[Unit] = F.unit
 }

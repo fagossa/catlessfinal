@@ -4,9 +4,12 @@ import java.util.UUID
 
 import cats.effect.Async
 
-import auth.models.{ Credential, Session }
+import auth.models.{Credential, Session}
 
-class AuthService[F[_]: Async](credentialStore: CredentialStore[F], sessionStore: SessionStore[F], userStore: UserStore[F]) {
+class AuthService[F[_]: Async](
+  credentialStore: CredentialStore[F],
+  sessionStore: SessionStore[F],
+  userStore: UserStore[F]) {
   def register(credential: Credential)(implicit A: Async[F]): F[Either[String, Unit]] = {
     A.ifM(credentialStore.check(credential))(
       A.map(credentialStore.saveCredential(credential))(Right.apply),
