@@ -1,7 +1,7 @@
 import Dependencies._
 
-lazy val root = (project in file(".")).
-  settings(
+lazy val root = (project in file("."))
+  .settings(
     inThisBuild(List(
       organization := "com.example",
       scalaVersion := "2.12.7",
@@ -19,6 +19,8 @@ lazy val root = (project in file(".")).
     scalacOptions ++= Seq(
       /*"-Xlog-implicits", */
       "-Ypartial-unification",
-      "-language:higherKinds"
+      "-language:higherKinds",
+      "-Ywarn-unused:imports",
+      "-Ywarn-dead-code"
     )
   )

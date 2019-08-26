@@ -1,7 +1,7 @@
-package ride.models
+package mybike.domain
 
-import java.util.UUID
 import java.time.{Duration, Instant}
+import java.util.UUID
 
 case class Ride(
   id: UUID,
@@ -10,4 +10,5 @@ case class Ride(
   duration: Duration,
   startTime: Instant,
   endTime: Instant,
-  lockId: String)
+  lockId: LockId
+)

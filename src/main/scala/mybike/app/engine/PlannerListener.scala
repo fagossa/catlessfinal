@@ -1,8 +1,7 @@
-package engine
+package mybike.app.engine
 
 trait PlannerListener {
   def onResponse(response: PlannerResponse): Unit
-
   def onFailure(error: Throwable): Unit
 }
 

@@ -1,4 +1,4 @@
-package auth.models
+package mybike.domain
 
 case class Credential(
   login: String,

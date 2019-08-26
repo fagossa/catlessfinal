@@ -1,15 +1,16 @@
-package auth
+package mybike.app.auth
 
 import java.util.UUID
 
 import cats.effect.Async
-
-import auth.models.{Credential, Session}
+import mybike.domain.{Credential, Session}
 
 class AuthService[F[_]: Async](
   credentialStore: CredentialStore[F],
   sessionStore: SessionStore[F],
-  userStore: UserStore[F]) {
+  userStore: UserAlgebra[F]
+) {
+
   def register(credential: Credential)(implicit A: Async[F]): F[Either[String, Unit]] = {
     A.ifM(credentialStore.check(credential))(
       A.map(credentialStore.saveCredential(credential))(Right.apply),
@@ -32,27 +33,13 @@ class AuthService[F[_]: Async](
 }
 
 trait CredentialStore[F[_]] {
-
   def saveCredential(credential: Credential): F[Unit]
-
   def check(credential: Credential): F[Boolean]
-
   def deactivateCredential(login: String): F[Unit]
-
 }
 
 trait SessionStore[F[_]] {
-
   def createSession(session: Session): F[Unit]
-
   def findSession(id: UUID): F[Option[Session]]
-
   def deleteSession(id: UUID): F[Either[String, Unit]]
-
-}
-
-case class User(username: String)
-
-trait UserStore[F[_]] {
-  def getByUsername(username: String): F[Either[String, User]]
 }

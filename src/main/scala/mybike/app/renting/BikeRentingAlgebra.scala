@@ -1,14 +1,16 @@
-package lock
+package mybike.app.renting
 
 import cats.effect.Sync
+import mybike.domain.{Lock, LockId}
 
 trait BikeRentingAlg[F[_]] {
   def rentBike(lockId: LockId): F[Either[String, Unit]]
   def releaseBike(lockId: LockId): F[Either[String, Unit]]
 }
 
-class BikeRentingInterpreter[F[_] : Sync](
-  lockRepo: LockRepositoryAlg[F]
+class BikeRentingInterpreter[F[_]: Sync](
+  lockRepo: LocksAlg[F],
+  lockCertificateRepo: LockCertificateRepositoryAlg[F]
 ) extends BikeRentingAlg[F] {
 
   override def rentBike(lockId: LockId): F[Either[String, Unit]] = {
@@ -39,7 +41,7 @@ class BikeRentingInterpreter[F[_] : Sync](
           Sync[F].pure(Left("Lock is not closed"))
         }
       case None =>
-        Sync[F].pure(Left("Lock is not closed"))
+        Sync[F].pure(Left("Lock could not be found"))
     }
   }
 
