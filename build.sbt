@@ -20,6 +20,7 @@ lazy val root = (project in file("."))
       /*"-Xlog-implicits", */
       "-Ypartial-unification",
       "-language:higherKinds",
+      "-Xlint:type-parameter-shadow",
       "-Ywarn-unused:imports",
       "-Ywarn-dead-code"
     )
