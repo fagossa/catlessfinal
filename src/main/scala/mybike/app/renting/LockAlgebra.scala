@@ -2,7 +2,7 @@ package mybike.app.renting
 
 import mybike.domain.{Lock, LockId}
 
-trait LocksAlg[F[_]] {
+trait LocksStoreAlg[F[_]] {
   def findAll: F[List[Lock]]
   def find(id: LockId): F[Option[Lock]]
   def save(lock: Lock): F[Unit]
@@ -12,9 +12,9 @@ trait LocksAlg[F[_]] {
 import cats.effect.concurrent.Ref
 import cats.effect.Sync
 
-class MemLocksRepository[F[_]](ref: Ref[F, Map[LockId, Lock]])(
+class MemLocksStoreStore[F[_]](ref: Ref[F, Map[LockId, Lock]])(
   implicit S: Sync[F]
-) extends LocksAlg[F] {
+) extends LocksStoreAlg[F] {
   import cats.implicits._
 
   override def findAll: F[List[Lock]] = ref.get.map(_.values.toList)

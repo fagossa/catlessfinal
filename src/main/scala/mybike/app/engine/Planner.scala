@@ -3,7 +3,7 @@ package mybike.app.engine
 import java.time.Duration
 
 import cats.effect.Sync
-import mybike.domain.Point
+import mybike.domain.GpsPoint
 
 trait PlannerChannel {
   def listen(listener: PlannerListener): Unit
@@ -13,7 +13,7 @@ trait PlannerAlg[F[_]] {
   def execute(request: PlannerRequest): F[PlannerChannel]
 }
 
-class PlannerInterpreter[F[_]: Sync] extends PlannerAlg[F] {
+class MemPlannerInterpreter[F[_]: Sync] extends PlannerAlg[F] {
   override def execute(request: PlannerRequest): F[PlannerChannel] =
     Sync[F].delay { (listener: PlannerListener) =>
       ()
@@ -21,10 +21,10 @@ class PlannerInterpreter[F[_]: Sync] extends PlannerAlg[F] {
 }
 
 case class PlannerResponse(
-  startPos: Point,
-  endPos: Point,
-  pickingPoint: Point,
-  returnPoint: Point,
+  startPos: GpsPoint,
+  endPos: GpsPoint,
+  pickingPoint: GpsPoint,
+  returnPoint: GpsPoint,
   path: Path,
   duration: Duration
 )
@@ -32,6 +32,6 @@ case class PlannerResponse(
 trait Path
 
 case class PlannerRequest(
-  startPos: Point,
-  endPos: Point
+  startPos: GpsPoint,
+  endPos: GpsPoint
 )

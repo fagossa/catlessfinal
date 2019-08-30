@@ -9,17 +9,17 @@ trait BikeRentingAlg[F[_]] {
 }
 
 class BikeRentingInterpreter[F[_]: Sync](
-  lockRepo: LocksAlg[F],
-  lockCertificateRepo: LockCertificateRepositoryAlg[F]
+  lockStore: LocksStoreAlg[F],
+  gpsPointStore: GpsPointStoreAlg[F]
 ) extends BikeRentingAlg[F] {
 
   override def rentBike(lockId: LockId): F[Either[String, Unit]] = {
     import cats.implicits._
-    lockRepo.find(lockId).flatMap {
+    lockStore.find(lockId).flatMap {
       case Some(lock: Lock) =>
         val updatedLock: Lock = lock.copy(open = true)
         for {
-          _ <- lockRepo.save(updatedLock)
+          _ <- lockStore.save(updatedLock)
           r <- Sync[F].pure(Right(()))
         } yield (r)
       case None =>
@@ -29,12 +29,12 @@ class BikeRentingInterpreter[F[_]: Sync](
 
   override def releaseBike(lockId: LockId): F[Either[String, Unit]] = {
     import cats.implicits._
-    lockRepo.find(lockId).flatMap {
+    lockStore.find(lockId).flatMap {
       case Some(lock: Lock) =>
         if (lock.open) {
           val updatedLock: Lock = lock.copy(open = false)
           for {
-            _ <- lockRepo.save(updatedLock)
+            _ <- lockStore.save(updatedLock)
             r <- Sync[F].pure(Right(()))
           } yield (r)
         } else {

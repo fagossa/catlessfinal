@@ -1,0 +1,2 @@
+b87f0b07-737a-4631-82e4-7fa48330dfab, la défense, 0.1, 0.12
+13a94c0d-67dd-47dd-adb8-bc11d881c1b4, auber, 0.511, 0.523

@@ -5,12 +5,12 @@ import java.util.UUID
 
 import cats.effect.{Concurrent, Sync}
 import mybike.app.engine._
-import mybike.domain.{LockId, Point, Ride}
+import mybike.domain.{GpsPoint, LockId, Ride}
 
 class RideAlgebra[F[_]](
   bikeRenting: BikeRentingAlg[F],
   planner: PlannerAlg[F],
-  locks: LocksAlg[F]
+  locks: LocksStoreAlg[F]
 )(
   implicit C: Concurrent[F] // Async with cancellation
 ) {
@@ -18,8 +18,8 @@ class RideAlgebra[F[_]](
 
   def bookRide(
     lockId: LockId,
-    start: Point,
-    end: Point
+    start: GpsPoint,
+    end: GpsPoint
   ): F[Either[String, Ride]] = {
     val request: PlannerRequest = PlannerRequest(start, end)
     val channel: F[PlannerChannel] = planner.execute(request)
@@ -30,12 +30,14 @@ class RideAlgebra[F[_]](
     }
 
     import cats.data.EitherT
-    def handleExistingLock(lockId: LockId): EitherT[F, String, Ride] =
+    def handleExistingLock(lockId: LockId): EitherT[F, String, Ride] = {
+      println(s"Hello from ${start}, ${end}")
       for {
         _ <- EitherT(bikeRenting.rentBike(lockId))
         ride = plannerResponse.flatMap(buildRide(_, lockId))
         response <- EitherT.liftF(ride)
       } yield response
+    }
 
     C.ifM(locks.find(lockId).map(_.isDefined))(
       handleExistingLock(lockId).value,

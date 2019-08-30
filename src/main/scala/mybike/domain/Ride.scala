@@ -5,8 +5,8 @@ import java.util.UUID
 
 case class Ride(
   id: UUID,
-  startPos: Point,
-  endPos: Point,
+  startPos: GpsPoint,
+  endPos: GpsPoint,
   duration: Duration,
   startTime: Instant,
   endTime: Instant,

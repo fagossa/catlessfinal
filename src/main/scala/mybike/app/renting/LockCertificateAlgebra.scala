@@ -1,30 +1,30 @@
 package mybike.app.renting
 
-import mybike.domain.LockCertificate
+import java.io.InputStreamReader
 
-trait LockCertificateRepositoryAlg[F[_]] {
-  def findAll: F[List[LockCertificate]]
+import mybike.domain.GpsPoint
+
+trait GpsPointStoreAlg[F[_]] {
+  def findAll: F[List[GpsPoint]]
 }
 
 import cats.effect.Sync
-import cats.effect.concurrent.Ref
-class MemLockCertificateRepositoryInterpreter[F[_]](
-  implicit S: Sync[F],
-  ref: Ref[F, Int]
-) extends LockCertificateRepositoryAlg[F] {
+class MemGpsPointStoreInterpreter[F[_]](
+  implicit S: Sync[F]
+) extends GpsPointStoreAlg[F] {
 
-  override def findAll: F[List[LockCertificate]] = {
-    import java.io.{BufferedReader, File, FileReader}
+  override def findAll: F[List[GpsPoint]] = {
+    import java.io.BufferedReader
     val acquire: F[BufferedReader] = S.delay {
-      val file = new File(getClass.getClassLoader.getResource("lock-hash.txt").getFile)
-      new BufferedReader(new FileReader(file))
+      val is = getClass.getResourceAsStream("/gps-points.txt")
+      new BufferedReader(new InputStreamReader(is))
     }
 
     S.bracket(acquire) { br =>
       import java.util.stream.Collectors
       import scala.collection.JavaConverters._
       import cats.implicits._
-      br.lines().collect(Collectors.toList()).asScala.toList.flatMap(LockCertificate.fromCsv).pure[F]
+      br.lines().collect(Collectors.toList()).asScala.toList.flatMap(GpsPoint.fromCsv).pure[F]
     }(br => S.delay(br.close()))
   }
 
