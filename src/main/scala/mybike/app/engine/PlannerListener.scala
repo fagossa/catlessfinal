@@ -6,9 +6,15 @@ trait PlannerListener {
 }
 
 object PlannerListener {
-  def apply(f: PlannerResponse => Unit)(g: Throwable => Unit): PlannerListener =
-    new PlannerListener {
-      def onResponse(response: PlannerResponse): Unit = f(response)
-      def onFailure(error: Throwable): Unit = g(error)
+  def apply(f: Either[Throwable, PlannerResponse] => Unit): PlannerListener = new PlannerListener {
+    override def onResponse(response: PlannerResponse): Unit = {
+      println("PlannerListener::onResponse")
+      f(Right(response))
     }
+
+    override def onFailure(error: Throwable): Unit = {
+      println("PlannerListener::onFailure")
+      f(Left(error))
+    }
+  }
 }

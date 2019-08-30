@@ -23,20 +23,19 @@ class RideAlgebra[F[_]](
   ): F[Either[String, Ride]] = {
     val request: PlannerRequest = PlannerRequest(start, end)
     val channel: F[PlannerChannel] = planner.execute(request)
-    val plannerResponse: F[PlannerResponse] = C.async[PlannerResponse] { cb =>
-      // TODO: complete implementation
-      val listener = PlannerListener(response => cb(Right(response)))(e => cb(Left(e)))
-      //channel.listen(listener)
+
+    val plannerResponse: F[PlannerResponse] = C.async[PlannerResponse] { callback =>
+      val listener: PlannerListener = PlannerListener.apply(resp => callback(resp))
+      channel.map(_.listen(listener))
     }
 
     import cats.data.EitherT
-    def handleExistingLock(lockId: LockId): EitherT[F, String, Ride] = {
-      println(s"Hello from ${start}, ${end}")
-      for {
-        _ <- EitherT(bikeRenting.rentBike(lockId))
-        ride = plannerResponse.flatMap(buildRide(_, lockId))
-        response <- EitherT.liftF(ride)
-      } yield response
+    def handleExistingLock(lockId: LockId): F[Either[String, Ride]] = {
+      println(s"RideAlgebra::handleExistingLock -> ${lockId}")
+      (for {
+        _        <- EitherT(bikeRenting.rentBike(lockId))
+        response <- EitherT(plannerResponse.flatMap(buildRide(_, lockId)).map(_.asRight[String]))
+      } yield response).value
     }
 
     C.ifM(locks.find(lockId).map(_.isDefined))(
@@ -45,7 +44,7 @@ class RideAlgebra[F[_]](
     )
   }
 
-  private def buildRide(response: PlannerResponse, lockId: LockId): F[Ride] =
+  private def buildRide(response: PlannerResponse, lockId: LockId): F[Ride] = {
     for {
       now <- Sync[F].delay { Instant.now() }
       ride <- Ride(
@@ -57,6 +56,7 @@ class RideAlgebra[F[_]](
         endTime = now,
         lockId = lockId
       ).pure[F]
-    } yield (ride)
+    } yield ride
+  }
 
 }
