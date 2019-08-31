@@ -18,17 +18,17 @@ class ProgramContext(
   def program(locks: Lock*): IO[Either[String, Ride]] = {
     for {
       gpsStore <- IO.pure(new MemGpsPointStoreInterpreter[IO]())
-      lockStore <- (for {
+      lockStore <- for {
         state <- Ref.of[IO, Map[LockId, Lock]](locks.map(lock => (lock.id, lock)).toMap)
         resp  <- IO.pure(new MemLocksStoreStore[IO](state))
-      } yield resp)
+      } yield resp
       renting      <- IO.pure(new BikeRentingInterpreter[IO](lockStore, gpsStore))
       planner      <- IO.pure(new MemPlannerInterpreter[IO]())
       rider        <- IO.pure(new RideAlgebra(renting, planner, lockStore))
       allGpsPoints <- gpsStore.findAll
       allLocks     <- lockStore.findAll
       response     <- rider.bookRide(allLocks(0).id, allGpsPoints(0), allGpsPoints(1))
-    } yield (response)
+    } yield response
   }
 
 }

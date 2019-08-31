@@ -22,25 +22,26 @@ class RideAlgebra[F[_]](
     end: GpsPoint
   ): F[Either[String, Ride]] = {
     val request: PlannerRequest = PlannerRequest(start, end)
-    val channel: F[PlannerChannel] = planner.execute(request)
+    val channel: PlannerChannel = planner.execute(request)
 
     val plannerResponse: F[PlannerResponse] = C.async[PlannerResponse] { callback =>
-      val listener: PlannerListener = PlannerListener.apply(resp => callback(resp))
-      channel.map(_.listen(listener))
+      val listener: PlannerListener = PlannerListener.handle(resp => callback(resp))
+      channel.listen(listener)
     }
 
     import cats.data.EitherT
     def handleExistingLock(lockId: LockId): F[Either[String, Ride]] = {
-      println(s"RideAlgebra::handleExistingLock -> ${lockId}")
       (for {
-        _        <- EitherT(bikeRenting.rentBike(lockId))
-        response <- EitherT(plannerResponse.flatMap(buildRide(_, lockId)).map(_.asRight[String]))
+        _ <- EitherT(bikeRenting.rentBike(lockId))
+        response <- EitherT(plannerResponse.flatMap { plannerResponse =>
+          buildRide(plannerResponse, lockId)
+        }.map(_.asRight[String]))
       } yield response).value
     }
 
     C.ifM(locks.find(lockId).map(_.isDefined))(
       handleExistingLock(lockId).value,
-      C.pure(Left(s"Lock with id <${lockId}> does not exist"))
+      C.pure(Left(s"Lock with id <$lockId> does not exist"))
     )
   }
 
