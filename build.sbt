@@ -4,7 +4,7 @@ lazy val root = (project in file("."))
   .settings(
     inThisBuild(List(
       organization := "com.example",
-      scalaVersion := "2.12.7",
+      scalaVersion := "2.12.9",
       version := "0.1.0-SNAPSHOT"
     )),
     name := "catless",
@@ -14,6 +14,7 @@ lazy val root = (project in file("."))
     )
   )
   .settings(
+    connectInput in run := true, // with this we can 'readLine'
     fork in run := true,
     scalafmtOnCompile := true,
     scalacOptions ++= Seq(
