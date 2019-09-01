@@ -7,7 +7,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import cats.effect.{ContextShift, ExitCode, IO, IOApp, Timer}
 import cats.effect.concurrent.Ref
 import mybike.app.engine.MemPlannerInterpreter
-import mybike.app.renting.{BikeRentingInterpreter, MemGpsPointStoreInterpreter, MemLocksStoreStore, RideAlgebra}
+import mybike.app.renting.{BikeRentingInterpreter, MemGpsPointStoreInterpreter, MemLocksStoreStore, Rider}
 import mybike.domain.{Lock, LockId, Ride}
 
 class ProgramContext(
@@ -24,7 +24,7 @@ class ProgramContext(
       } yield resp
       renting      <- IO.pure(new BikeRentingInterpreter[IO](lockStore, gpsStore))
       planner      <- IO.pure(new MemPlannerInterpreter[IO]())
-      rider        <- IO.pure(new RideAlgebra(renting, planner, lockStore))
+      rider        <- IO.pure(new Rider(renting, planner, lockStore))
       allGpsPoints <- gpsStore.findAll
       allLocks     <- lockStore.findAll
       response     <- rider.bookRide(allLocks(0).id, allGpsPoints(0), allGpsPoints(1))

@@ -7,7 +7,7 @@ import cats.effect.{Concurrent, Sync}
 import mybike.app.engine._
 import mybike.domain.{GpsPoint, LockId, Ride}
 
-class RideAlgebra[F[_]](
+class Rider[F[_]](
   bikeRenting: BikeRentingAlg[F],
   planner: PlannerAlg[F],
   locks: LocksStoreAlg[F]
@@ -39,24 +39,29 @@ class RideAlgebra[F[_]](
       } yield response).value
     }
 
-    C.ifM(locks.find(lockId).map(_.isDefined))(
-      handleExistingLock(lockId).value,
+    def handleLockDoesNotExist(lockId: LockId): F[Either[String, Ride]] = {
       C.pure(Left(s"Lock with id <$lockId> does not exist"))
+    }
+
+    C.ifM(locks.exist(lockId))(
+      handleExistingLock(lockId),
+      handleLockDoesNotExist(lockId)
     )
   }
 
   private def buildRide(response: PlannerResponse, lockId: LockId): F[Ride] = {
     for {
       now <- Sync[F].delay { Instant.now() }
-      ride <- Ride(
-        id = UUID.randomUUID(),
-        startPos = response.startPos,
-        endPos = response.endPos,
-        duration = response.duration,
-        startTime = now,
-        endTime = now,
-        lockId = lockId
-      ).pure[F]
+      ride <- Sync[F].pure(
+        Ride(
+          id = UUID.randomUUID(),
+          startPos = response.startPos,
+          endPos = response.endPos,
+          duration = response.duration,
+          startTime = now,
+          endTime = now,
+          lockId = lockId
+        ))
     } yield ride
   }
 

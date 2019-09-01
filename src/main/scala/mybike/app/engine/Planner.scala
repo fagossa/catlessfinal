@@ -32,12 +32,11 @@ class MemPlannerInterpreter[F[_]: Sync] extends PlannerAlg[F] {
           List(request.startPos, request.endPos),
           Duration.of(2, ChronoUnit.MINUTES)
         )
-        // triggers callback
-        listener.onResponse(response)
+
+        listener.onResponse(response) // triggers callback
       } catch {
         case NonFatal(error) =>
-          // triggers callback
-          listener.onFailure(error)
+          listener.onFailure(error) // triggers callback
       }
       ()
     }
