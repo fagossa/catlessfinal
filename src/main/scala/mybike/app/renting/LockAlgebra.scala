@@ -3,7 +3,7 @@ package mybike.app.renting
 import mybike.domain.{Lock, LockId}
 
 trait LocksStoreAlg[F[_]] {
-  def findAll: F[List[Lock]]
+  def findAll: F[Vector[Lock]]
   def find(id: LockId): F[Option[Lock]]
   def exist(id: LockId): F[Boolean]
   def save(lock: Lock): F[Unit]
@@ -18,7 +18,7 @@ class MemLocksStoreStore[F[_]](ref: Ref[F, Map[LockId, Lock]])(
 ) extends LocksStoreAlg[F] {
   import cats.implicits._
 
-  override def findAll: F[List[Lock]] = ref.get.map(_.values.toList)
+  override def findAll: F[Vector[Lock]] = ref.get.map(_.values.toVector)
 
   override def find(id: LockId): F[Option[Lock]] = findAll.map(_.find(_.id == id))
 

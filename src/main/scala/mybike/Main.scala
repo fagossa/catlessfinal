@@ -6,7 +6,7 @@ import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import cats.effect.{ContextShift, ExitCode, IO, IOApp, Timer}
 import cats.effect.concurrent.Ref
-import mybike.app.console.{Menu, ConsoleImpl}
+import mybike.app.console.{ConsoleImpl, Menu}
 import mybike.app.engine.MemPlannerInterpreter
 import mybike.app.renting.{BikeRentingInterpreter, MemGpsPointStoreInterpreter, MemLocksStoreStore, Rider}
 import mybike.domain.{Lock, LockId}
@@ -28,7 +28,7 @@ class ProgramContext(
       rider    <- IO.pure(new Rider(renting, planner, lockStore))
       console  <- IO.pure(new ConsoleImpl[IO]())
       cli      <- IO.pure(new Menu[IO](gpsStore, lockStore, rider, console))
-      response <- cli.programLoop
+      response <- cli.mainMenu
     } yield response
   }
 
@@ -49,7 +49,8 @@ object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
     val runner = ProgramContext()
     val initialLocks = List(
-      Lock(id = LockId(UUID.fromString("e91c80eb-7fc7-42dd-b7d8-6c06e77976f9")), open = true, hash = None)
+      Lock(id = LockId(UUID.fromString("e91c80eb-7fc7-42dd-b7d8-6c06e77976f9")), open = true),
+      Lock(id = LockId(UUID.fromString("23ab9874-d6d3-4ca4-ad9e-dc54457ad731")), open = false)
     )
     for {
       response <- runner.program(initialLocks: _*)

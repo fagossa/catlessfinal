@@ -6,6 +6,7 @@ import mybike.domain.GpsPoint
 
 trait GpsPointStoreAlg[F[_]] {
   def findAll: F[List[GpsPoint]]
+  def findMostPopularTuple: F[Option[(GpsPoint, GpsPoint)]]
 }
 
 import cats.effect.Sync
@@ -27,5 +28,12 @@ class MemGpsPointStoreInterpreter[F[_]](
       br.lines().collect(Collectors.toList()).asScala.toList.flatMap(GpsPoint.fromCsv).pure[F]
     }(br => S.delay(br.close()))
   }
+
+  import cats.implicits._
+  override def findMostPopularTuple: F[Option[(GpsPoint, GpsPoint)]] =
+    findAll.map {
+      case h1 :: h2 :: _ => Some((h1, h2))
+      case _ => None
+    }
 
 }
