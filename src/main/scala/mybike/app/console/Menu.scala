@@ -42,7 +42,10 @@ class Menu[F[_]: Monad](
       n <- readInt
       resp <- n match {
         case Some(option) if option >= 0 && option < allLocks.size =>
-          bookRide(maybePopularGps, allLocks.get(option))
+          for {
+            _    <- bookRide(maybePopularGps, allLocks.get(option))
+            next <- bookRideMenu
+          } yield next
         case Some(_) => bookRideMenu
         case _ => mainMenu
       }
@@ -62,7 +65,7 @@ class Menu[F[_]: Monad](
         result.flatMap {
           case Right(ride) =>
             console
-              .putStrLn(s"CREATED - Ride will take ${ride.duration.toMinutes} minutes")
+              .putStrLn(s">>> CREATED - Ride will take ${ride.duration.toMinutes} minutes")
               .map(_ => ().asRight[String])
           case l @ Left(error) => Monad[F].pure(error.asLeft[Unit])
         }

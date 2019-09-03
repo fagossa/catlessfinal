@@ -3,7 +3,7 @@ package mybike.app.renting
 import java.time.Instant
 import java.util.UUID
 
-import cats.effect.{Concurrent, Sync}
+import cats.effect.{Concurrent, Sync, Timer}
 import mybike.app.engine._
 import mybike.domain.{GpsPoint, LockId, Ride}
 
@@ -12,7 +12,8 @@ class Rider[F[_]](
   planner: PlannerAlg[F],
   locks: LocksStoreAlg[F]
 )(
-  implicit C: Concurrent[F] // Async with cancellation
+  implicit C: Concurrent[F], // Async with cancellation
+  T: Timer[F] // Simulate sleep
 ) {
   import cats.implicits._
 
@@ -32,10 +33,11 @@ class Rider[F[_]](
     import cats.data.EitherT
     def handleExistingLock(lockId: LockId): F[Either[String, Ride]] = {
       (for {
-        _ <- EitherT(bikeRenting.rentBike(lockId))
         response <- EitherT(plannerResponse.flatMap { plannerResponse =>
           buildRide(plannerResponse, lockId)
         }.map(_.asRight[String]))
+        _ <- EitherT(bikeRenting.rentBike(lockId))
+        _ <- EitherT.liftF[F, String, Unit](sendNotifications(response))
       } yield response).value
     }
 
@@ -43,10 +45,24 @@ class Rider[F[_]](
       C.pure(Left(s"Lock with id <$lockId> does not exist"))
     }
 
-    C.ifM(locks.exist(lockId))(
+    C.ifM(locks.isClosed(lockId))(
       handleExistingLock(lockId),
       handleLockDoesNotExist(lockId)
     )
+  }
+
+  private def sendNotifications(ride: Ride): F[Unit] = {
+    import scala.concurrent.duration._
+    def notifService2(ride: Ride): F[Unit] =
+      logString("Calling notif service 2") *> T.sleep(2.seconds) *> logString(s"process 2 DONE")
+
+    def notifService1(ride: Ride): F[Unit] =
+      logString("Calling notif service 1") *> T.sleep(1.seconds) *> logString("process 1 DONE")
+
+    def logString(str: String): F[Unit] =
+      Sync[F].delay { println(str) }
+
+    C.race(notifService1(ride), notifService2(ride)).void
   }
 
   private def buildRide(response: PlannerResponse, lockId: LockId): F[Ride] = {
