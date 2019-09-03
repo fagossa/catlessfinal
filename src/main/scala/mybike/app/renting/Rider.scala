@@ -62,7 +62,7 @@ class Rider[F[_]](
     def logString(str: String): F[Unit] =
       Sync[F].delay { println(str) }
 
-    C.race(notifService1(ride), notifService2(ride)).void
+    C.race(notifService1(ride), notifService2(ride)).void // the looser process will be cancelled
   }
 
   private def buildRide(response: PlannerResponse, lockId: LockId): F[Ride] = {
