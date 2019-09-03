@@ -45,9 +45,9 @@ class Rider[F[_]](
       C.pure(Left(s"Lock with id <$lockId> does not exist"))
     }
 
-    C.ifM(locks.isClosed(lockId))(
-      handleExistingLock(lockId),
-      handleLockDoesNotExist(lockId)
+    C.ifM(locks.isOpen(lockId))(
+      handleLockDoesNotExist(lockId),
+      handleExistingLock(lockId)
     )
   }
 

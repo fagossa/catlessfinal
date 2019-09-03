@@ -5,7 +5,7 @@ import mybike.domain.{Lock, LockId}
 trait LocksStoreAlg[F[_]] {
   def findAll: F[Vector[Lock]]
   def find(id: LockId): F[Option[Lock]]
-  def isClosed(id: LockId): F[Boolean]
+  def isOpen(id: LockId): F[Boolean]
   def save(lock: Lock): F[Unit]
   def disable(id: LockId): F[Unit]
 }
@@ -22,13 +22,12 @@ class MemLocksStoreStore[F[_]](ref: Ref[F, Map[LockId, Lock]])(
 
   override def find(id: LockId): F[Option[Lock]] = findAll.map(_.find(_.id == id))
 
-  override def isClosed(id: LockId): F[Boolean] = find(id).map(_.exists(!_.open))
+  override def isOpen(id: LockId): F[Boolean] = find(id).map(_.exists(_.open))
 
-  override def save(lock: Lock): F[Unit] = S.delay {
+  override def save(lock: Lock): F[Unit] =
     ref.modify { previous: Map[LockId, Lock] =>
       (previous + (lock.id -> lock), previous)
     }
-  }
 
   override def disable(id: LockId): F[Unit] = find(id).map {
     case Some(lock) =>
