@@ -66,8 +66,9 @@ class Rider[F[_]](
   }
 
   private def buildRide(response: PlannerResponse, lockId: LockId): F[Ride] = {
+    import scala.concurrent.duration.MILLISECONDS
     for {
-      now <- Sync[F].delay { Instant.now() }
+      now <- T.clock.monotonic(MILLISECONDS).map(millis => Instant.ofEpochMilli(millis))
       ride <- Sync[F].pure(
         Ride(
           id = UUID.randomUUID(),
