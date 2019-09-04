@@ -2,7 +2,7 @@ package mybike.app.console
 
 import cats.Monad
 import mybike.app.renting.{GpsPointStoreAlg, LocksStoreAlg, Rider}
-import mybike.domain.{GpsPoint, Lock}
+import mybike.domain.{GpsPoint, Lock, Ride}
 
 class Menu[F[_]: Monad](
   gpsStore: GpsPointStoreAlg[F],
@@ -42,10 +42,12 @@ class Menu[F[_]: Monad](
       n <- readInt
       resp <- n match {
         case Some(option) if option >= 0 && option < allLocks.size =>
-          for {
-            _    <- bookRide(maybePopularGps, allLocks.get(option))
-            next <- bookRideMenu
-          } yield next
+          bookRide(maybePopularGps, allLocks.get(option)).flatMap {
+            case Right(ride) =>
+              putStrLn(s">>> CREATED - Ride will take ${ride.duration.toMinutes} minutes") *> bookRideMenu
+            case Left(error) =>
+              putStrLn(s">>> ERROR : $error") *> bookRideMenu
+          }
         case Some(_) => bookRideMenu
         case _ => mainMenu
       }
@@ -55,21 +57,17 @@ class Menu[F[_]: Monad](
   private def bookRide(
     maybePopularGps: Option[(GpsPoint, GpsPoint)],
     maybeLock: Option[Lock]
-  ): F[Either[String, Unit]] = {
+  ): F[Either[String, Ride]] = {
     import cats.implicits._
     (maybeLock, maybePopularGps).mapN {
-      case (lock, (pos1, pos2)) =>
-        rider.bookRide(lock.id, pos1, pos2)
+      case (lock, (pos1, pos2)) => rider.bookRide(lock.id, pos1, pos2)
     } match {
       case Some(result) =>
-        result.flatMap {
-          case Right(ride) =>
-            console
-              .putStrLn(s">>> CREATED - Ride will take ${ride.duration.toMinutes} minutes")
-              .map(_ => ().asRight[String])
-          case l @ Left(error) => Monad[F].pure(error.asLeft[Unit])
-        }
-      case None => bookRideMenu
+        result
+      case None =>
+        console
+          .putStrLn(s">>> Impossible to create a ride")
+          .map(_ => "No lock is available".asLeft[Ride])
     }
   }
 }
