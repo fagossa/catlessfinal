@@ -7,6 +7,7 @@ lazy val root = (project in file("."))
       scalaVersion := "2.12.9",
       version := "0.1.0-SNAPSHOT"
     )),
+    turbo := true, // increase test speed in tests
     name := "catless",
     licenses += ("MIT", new URL("https://opensource.org/licenses/MIT")),
     libraryDependencies ++= Seq(
@@ -29,7 +30,12 @@ lazy val commonScalacOptions = Seq(
   "-language:higherKinds",
   "-Xlint:type-parameter-shadow",
   "-Ywarn-unused:imports",
-  "-Ywarn-dead-code"
+  "-Ywarn-dead-code",
+  "-unchecked", // Enable additional warnings where generated code depends on assumptions.
+  "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
+  "-Xlint:nullary-unit", // Warn when nullary methods return Unit.
+  "-Xlint:adapted-args", // Warn if an argument list is modified to match the receiver.
+  "-Ywarn-value-discard"// Warn when non-Unit expression results are unused.
 )
 
 lazy val partialUnification = Seq(
