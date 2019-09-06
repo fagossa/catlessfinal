@@ -1,11 +1,12 @@
 package mybike.app.renting
 
 import cats.effect.Sync
+import mybike.ErrorOr
 import mybike.domain.{Lock, LockId}
 
 trait BikeRentingAlg[F[_]] {
-  def rentBike(lockId: LockId): F[Either[String, LockId]]
-  def releaseBike(lockId: LockId): F[Either[String, Unit]]
+  def rent(lockId: LockId): F[ErrorOr[LockId]]
+  def release(lockId: LockId): F[ErrorOr[Unit]]
 }
 
 class BikeRentingInterpreter[F[_]: Sync](
@@ -13,7 +14,7 @@ class BikeRentingInterpreter[F[_]: Sync](
   gpsPointStore: GpsPointStoreAlg[F]
 ) extends BikeRentingAlg[F] {
 
-  override def rentBike(lockId: LockId): F[Either[String, LockId]] = {
+  override def rent(lockId: LockId): F[ErrorOr[LockId]] = {
     import cats.implicits._
     lockStore.find(lockId).flatMap {
       case Some(lock: Lock) =>
@@ -27,21 +28,16 @@ class BikeRentingInterpreter[F[_]: Sync](
     }
   }
 
-  override def releaseBike(lockId: LockId): F[Either[String, Unit]] = {
+  override def release(lockId: LockId): F[ErrorOr[Unit]] = {
     import cats.implicits._
     lockStore.find(lockId).flatMap {
-      case Some(lock: Lock) =>
-        if (lock.open) {
-          val updatedLock: Lock = lock.copy(open = false)
-          for {
-            _ <- lockStore.save(updatedLock)
-            r <- Sync[F].pure(Right(()))
-          } yield (r)
-        } else {
-          Sync[F].pure(Left("Lock is not closed"))
-        }
-      case None =>
-        Sync[F].pure(Left("Lock could not be found"))
+      case Some(lock: Lock) if lock.open =>
+        for {
+          _ <- lockStore.save(lock.copy(open = false))
+          r <- Sync[F].pure(Right(()))
+        } yield r
+      case Some(_) => Sync[F].pure(Left("Lock is not closed"))
+      case None => Sync[F].pure(Left("Lock could not be found"))
     }
   }
 

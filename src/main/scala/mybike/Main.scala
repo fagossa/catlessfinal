@@ -16,7 +16,7 @@ class ProgramContext(
   cs: ContextShift[IO],
   timer: Timer[IO]) {
 
-  def program(locks: Lock*): IO[Either[String, Unit]] = {
+  def program(locks: Lock*): IO[ErrorOr[Unit]] = {
     for {
       gpsStore <- IO.pure(new MemGpsPointStoreInterpreter[IO]())
       lockStore <- for {

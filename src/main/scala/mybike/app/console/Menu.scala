@@ -1,6 +1,7 @@
 package mybike.app.console
 
 import cats.Monad
+import mybike.ErrorOr
 import mybike.app.renting.{GpsPointStoreAlg, LocksStoreAlg, Rider}
 import mybike.domain.{GpsPoint, Lock, Ride}
 
@@ -11,7 +12,7 @@ class Menu[F[_]: Monad](
   console: Console[F]
 ) {
 
-  def mainMenu: F[Either[String, Unit]] = {
+  def mainMenu: F[ErrorOr[Unit]] = {
     import cats.implicits._
     import console._
     for {
@@ -28,7 +29,7 @@ class Menu[F[_]: Monad](
     } yield resp
   }
 
-  def bookRideMenu: F[Either[String, Unit]] = {
+  def bookRideMenu: F[ErrorOr[Unit]] = {
     import cats.implicits._
     import console._
     for {
@@ -57,7 +58,7 @@ class Menu[F[_]: Monad](
   private def bookRide(
     maybePopularGps: Option[(GpsPoint, GpsPoint)],
     maybeLock: Option[Lock]
-  ): F[Either[String, Ride]] = {
+  ): F[ErrorOr[Ride]] = {
     import cats.implicits._
     (maybeLock, maybePopularGps).mapN {
       case (lock, (pos1, pos2)) => rider.bookRide(lock.id, pos1, pos2)

@@ -4,6 +4,7 @@ import java.time.Instant
 import java.util.UUID
 
 import cats.effect.{Concurrent, Sync, Timer}
+import mybike.ErrorOr
 import mybike.app.engine._
 import mybike.domain.{GpsPoint, LockId, Ride}
 
@@ -21,7 +22,7 @@ class Rider[F[_]](
     lockId: LockId,
     start: GpsPoint,
     end: GpsPoint
-  ): F[Either[String, Ride]] = {
+  ): F[ErrorOr[Ride]] = {
     val request: PlannerRequest = PlannerRequest(start, end)
     val channel: PlannerChannel = planner.execute(request)
 
@@ -31,17 +32,17 @@ class Rider[F[_]](
     }
 
     import cats.data.EitherT
-    def handleExistingLock(lockId: LockId): F[Either[String, Ride]] = {
+    def handleExistingLock(lockId: LockId): F[ErrorOr[Ride]] = {
       (for {
         response <- EitherT(plannerResponse.flatMap { plannerResponse =>
           buildRide(plannerResponse, lockId)
         }.map(_.asRight[String]))
-        _ <- EitherT(bikeRenting.rentBike(lockId))
+        _ <- EitherT(bikeRenting.rent(lockId))
         _ <- EitherT.liftF[F, String, Unit](sendNotifications(response))
       } yield response).value
     }
 
-    def handleLockDoesNotExist(lockId: LockId): F[Either[String, Ride]] = {
+    def handleLockDoesNotExist(lockId: LockId): F[ErrorOr[Ride]] = {
       C.pure(Left(s"Lock with id <$lockId> does not exist"))
     }
 
