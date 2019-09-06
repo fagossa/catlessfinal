@@ -1,11 +1,12 @@
 package mybike.app.console
 
-import cats.Monad
+import cats.{Applicative, Monad}
+import cats.effect.Timer
 import mybike.ErrorOr
 import mybike.app.renting.{GpsPointStoreAlg, LocksStoreAlg, Rider}
 import mybike.domain.{GpsPoint, Lock, Ride}
 
-class Menu[F[_]: Monad](
+class Menu[F[_]: Monad: Timer](
   gpsStore: GpsPointStoreAlg[F],
   lockStore: LocksStoreAlg[F],
   rider: Rider[F],
@@ -16,14 +17,14 @@ class Menu[F[_]: Monad](
     import cats.implicits._
     import console._
     for {
+      _ <- cleanScreen
       _ <- putStrLn("Welcome, please choose your option")
-      _ <- putStrLn("""
-                      |[1] Book a ride
-                      |[2] EXIT""".stripMargin)
+      _ <- putBoldLine("[1] Book a ride")
+      _ <- putStrLn("[2] EXIT")
       n <- readInt
       resp <- n match {
         case Some(option) if option == 1 => bookRideMenu.map(_ => ().asRight[String])
-        case Some(option) if option == 2 => putStrLn("Bye") *> Monad[F].pure("Terminated".asLeft[Unit])
+        case Some(option) if option == 2 => cleanScreen *> putStrLn("Bye") *> Monad[F].pure("Terminated".asLeft[Unit])
         case _ => mainMenu
       }
     } yield resp
@@ -32,12 +33,14 @@ class Menu[F[_]: Monad](
   def bookRideMenu: F[ErrorOr[Unit]] = {
     import cats.implicits._
     import console._
+    import scala.concurrent.duration._
     for {
+      _               <- cleanScreen
       maybePopularGps <- gpsStore.findMostPopularTuple
       allLocks        <- lockStore.findAll
       _               <- putStrLn("Choose your lock: ")
       _ <- allLocks.mapWithIndex { (lock, index) =>
-        putStrLn(s"[$index] - ${lock.id.value} - ${if (lock.isOpen) "opened" else "closed"}")
+        putBoldLine(s"[$index] - ${lock.id.value} - ${if (lock.isOpen) "opened" else "closed"}")
       }.sequence
       _ <- putStrLn(s"[x] - RETURN")
       n <- readInt
@@ -45,9 +48,11 @@ class Menu[F[_]: Monad](
         case Some(option) if option >= 0 && option < allLocks.size =>
           bookRide(maybePopularGps, allLocks.get(option)).flatMap {
             case Right(ride) =>
-              putStrLn(s">>> CREATED - Ride will take ${ride.duration.toMinutes} minutes") *> bookRideMenu
+              putInfoLine(s">>> CREATED - Ride will take ${ride.duration.toMinutes} minutes") *>
+                implicitly[Timer[F]].sleep(2.seconds) *> bookRideMenu
             case Left(error) =>
-              putStrLn(s">>> ERROR : $error") *> bookRideMenu
+              implicitly[Timer[F]]
+                .sleep(3.seconds) *> cleanScreen *> putErrorLine(s">>> ERROR : $error") *> bookRideMenu
           }
         case Some(_) => bookRideMenu
         case _ => mainMenu
@@ -63,12 +68,8 @@ class Menu[F[_]: Monad](
     (maybeLock, maybePopularGps).mapN {
       case (lock, (pos1, pos2)) => rider.bookRide(lock.id, pos1, pos2)
     } match {
-      case Some(result) =>
-        result
-      case None =>
-        console
-          .putStrLn(s">>> Impossible to create a ride")
-          .map(_ => "No lock is available".asLeft[Ride])
+      case Some(result) => result
+      case None => Applicative[F].pure("Not enough GPS positions are available to make a ride".asLeft[Ride])
     }
   }
 }

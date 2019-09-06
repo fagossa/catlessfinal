@@ -8,6 +8,10 @@ trait Console[F[_]] {
   def readLn: F[String]
   def readInt: F[Option[Int]]
   def putStrLn(str: String): F[Unit]
+  def cleanScreen: F[Unit]
+  def putErrorLine(str: String): F[Unit]
+  def putInfoLine(str: String): F[Unit]
+  def putBoldLine(str: String): F[Unit]
 }
 
 class ConsoleImpl[F[_]: Sync] extends Console[F] {
@@ -20,4 +24,13 @@ class ConsoleImpl[F[_]: Sync] extends Console[F] {
   }
 
   override def putStrLn(str: String): F[Unit] = Sync[F].delay { println(str) }
+
+  override def cleanScreen: F[Unit] = putStrLn(s"\033[2J")
+
+  override def putErrorLine(str: String): F[Unit] = putStrLn(s"\u001b[31m$str")
+
+  override def putInfoLine(str: String): F[Unit] = putStrLn(s"\u001b[32m$str")
+
+  override def putBoldLine(str: String): F[Unit] = putStrLn(s"\u001b[34m$str")
+
 }
