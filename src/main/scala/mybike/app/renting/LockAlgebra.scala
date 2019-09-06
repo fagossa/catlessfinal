@@ -29,10 +29,8 @@ class MemLocksStoreStore[F[_]](ref: Ref[F, Map[LockId, Lock]])(
       (previous + (lock.id -> lock), previous)
     }
 
-  override def disable(id: LockId): F[Unit] = find(id).map {
-    case Some(lock) =>
-      val newLock = lock.copy(open = false)
-      save(newLock)
+  override def disable(id: LockId): F[Unit] = find(id).flatMap {
+    case Some(lock) => save(lock.copy(open = false))
     case None => S.unit
   }
 
