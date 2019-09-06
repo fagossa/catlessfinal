@@ -18,9 +18,8 @@ class BikeRentingInterpreter[F[_]: Sync](
     import cats.implicits._
     lockStore.find(lockId).flatMap {
       case Some(lock: Lock) =>
-        val updatedLock: Lock = lock.copy(open = true)
         for {
-          _ <- lockStore.save(updatedLock)
+          _ <- lockStore.save(lock.opened())
           r <- Sync[F].pure(Right(lockId))
         } yield r
       case None =>
@@ -31,9 +30,9 @@ class BikeRentingInterpreter[F[_]: Sync](
   override def release(lockId: LockId): F[ErrorOr[Unit]] = {
     import cats.implicits._
     lockStore.find(lockId).flatMap {
-      case Some(lock: Lock) if lock.open =>
+      case Some(lock: Lock) if lock.isOpen =>
         for {
-          _ <- lockStore.save(lock.copy(open = false))
+          _ <- lockStore.save(lock.closed())
           r <- Sync[F].pure(Right(()))
         } yield r
       case Some(_) => Sync[F].pure(Left("Lock is not closed"))

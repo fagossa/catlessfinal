@@ -37,7 +37,7 @@ class Menu[F[_]: Monad](
       allLocks        <- lockStore.findAll
       _               <- putStrLn("Choose your lock: ")
       _ <- allLocks.mapWithIndex { (lock, index) =>
-        putStrLn(s"[$index] - ${lock.id.value} - ${if (lock.open) "opened" else "closed"}")
+        putStrLn(s"[$index] - ${lock.id.value} - ${if (lock.isOpen) "opened" else "closed"}")
       }.sequence
       _ <- putStrLn(s"[x] - RETURN")
       n <- readInt

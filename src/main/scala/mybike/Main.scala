@@ -49,8 +49,8 @@ object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
     val runner = ProgramContext()
     val initialLocks = List(
-      Lock(id = LockId(UUID.fromString("e91c80eb-7fc7-42dd-b7d8-6c06e77976f9")), open = true),
-      Lock(id = LockId(UUID.fromString("23ab9874-d6d3-4ca4-ad9e-dc54457ad731")), open = false)
+      Lock(id = LockId(UUID.fromString("e91c80eb-7fc7-42dd-b7d8-6c06e77976f9")), isOpen = true),
+      Lock(id = LockId(UUID.fromString("23ab9874-d6d3-4ca4-ad9e-dc54457ad731")), isOpen = false)
     )
     for {
       response <- runner.program(initialLocks: _*)

@@ -36,7 +36,7 @@ class LockAlgebraSpec extends AsyncFunSuite with Matchers with LockFixture {
         _         <- lockStore.disable(lock.id)
         foundLock <- lockStore.find(lock.id).map(_.get)
         rs <- IO {
-          foundLock.open shouldBe false
+          foundLock.isOpen shouldBe false
         }
       } yield (rs)
     }

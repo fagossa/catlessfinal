@@ -22,7 +22,7 @@ class MemLocksStoreStore[F[_]](ref: Ref[F, Map[LockId, Lock]])(
 
   override def find(id: LockId): F[Option[Lock]] = findAll.map(_.find(_.id == id))
 
-  override def isOpen(id: LockId): F[Boolean] = find(id).map(_.exists(_.open))
+  override def isOpen(id: LockId): F[Boolean] = find(id).map(_.exists(_.isOpen))
 
   override def save(lock: Lock): F[Unit] =
     ref.modify { previous: Map[LockId, Lock] =>
@@ -30,7 +30,7 @@ class MemLocksStoreStore[F[_]](ref: Ref[F, Map[LockId, Lock]])(
     }
 
   override def disable(id: LockId): F[Unit] = find(id).flatMap {
-    case Some(lock) => save(lock.copy(open = false))
+    case Some(lock) => save(lock.closed())
     case None => S.unit
   }
 
