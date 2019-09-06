@@ -32,7 +32,7 @@ class Rider[F[_]](
     }
 
     import cats.data.EitherT
-    def handleExistingLock(lockId: LockId): F[ErrorOr[Ride]] = {
+    def handleAvailableLock(lockId: LockId): F[ErrorOr[Ride]] = {
       (for {
         response <- EitherT(plannerResponse.flatMap { plannerResponse =>
           buildRide(plannerResponse, lockId)
@@ -42,13 +42,13 @@ class Rider[F[_]](
       } yield response).value
     }
 
-    def handleLockDoesNotExist(lockId: LockId): F[ErrorOr[Ride]] = {
-      C.pure(Left(s"Lock with id <$lockId> does not exist"))
+    def handleLockNotAvailable(lockId: LockId): F[ErrorOr[Ride]] = {
+      C.pure(Left(s"Lock with id <$lockId> is not available"))
     }
 
     C.ifM(locks.isOpen(lockId))(
-      handleLockDoesNotExist(lockId),
-      handleExistingLock(lockId)
+      handleLockNotAvailable(lockId),
+      handleAvailableLock(lockId)
     )
   }
 

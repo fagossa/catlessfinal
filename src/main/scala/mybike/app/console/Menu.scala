@@ -46,13 +46,12 @@ class Menu[F[_]: Monad: Timer](
       n <- readInt
       resp <- n match {
         case Some(option) if option >= 0 && option < allLocks.size =>
+          val pause = implicitly[Timer[F]].sleep(3.seconds)
           bookRide(maybePopularGps, allLocks.get(option)).flatMap {
             case Right(ride) =>
-              putInfoLine(s">>> CREATED - Ride will take ${ride.duration.toMinutes} minutes") *>
-                implicitly[Timer[F]].sleep(2.seconds) *> bookRideMenu
+              putInfoLine(s">>> CREATED - Ride will take ${ride.duration.toMinutes} minutes") *> pause *> bookRideMenu
             case Left(error) =>
-              implicitly[Timer[F]]
-                .sleep(3.seconds) *> cleanScreen *> putErrorLine(s">>> ERROR : $error") *> bookRideMenu
+              putErrorLine(s">>> ERROR : $error") *> pause *> bookRideMenu
           }
         case Some(_) => bookRideMenu
         case _ => mainMenu
