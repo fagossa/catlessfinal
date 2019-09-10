@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   object Versions {
-    val catsEffect = "1.0.0"
+    val catsEffect = "2.0.0"
 
     val kindProjector = "0.9.8"
     val betterMonadicFor = "0.3.0-M2"
