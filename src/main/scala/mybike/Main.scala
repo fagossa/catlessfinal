@@ -43,8 +43,9 @@ object ProgramContext {
 
 object Main extends IOApp {
   private val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(5))
-  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
-  override implicit val timer: Timer[IO] = IO.timer(ec)
+  // IOApp already provides implicitly:
+  // * ContextShift, a thread pool
+  // * Timer, to be able to sleep
 
   override def run(args: List[String]): IO[ExitCode] = {
     val runner = ProgramContext()
