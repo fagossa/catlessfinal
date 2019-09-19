@@ -24,10 +24,9 @@ class MemLocksStoreStore[F[_]](ref: Ref[F, Map[LockId, Lock]])(
 
   override def isOpen(id: LockId): F[Boolean] = find(id).map(_.exists(_.isOpen))
 
-  override def save(lock: Lock): F[Unit] =
-    ref.modify { previous: Map[LockId, Lock] =>
-      (previous + (lock.id -> lock), previous)
-    }
+  override def save(lock: Lock): F[Unit] = ref.update { content =>
+    content + (lock.id -> lock)
+  }
 
   override def disable(id: LockId): F[Unit] = find(id).flatMap {
     case Some(lock) => save(lock.closed())
