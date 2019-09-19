@@ -1,7 +1,9 @@
 package mybike.app.renting
 
 import java.io.InputStreamReader
+import java.util.stream.Collectors
 
+import cats.effect.Resource
 import mybike.domain.GpsPoint
 
 trait GpsPointStoreAlg[F[_]] {
@@ -16,17 +18,16 @@ class MemGpsPointStoreInterpreter[F[_]](
 
   override def findAll: F[List[GpsPoint]] = {
     import java.io.BufferedReader
-    val acquire: F[BufferedReader] = S.delay {
-      val is = getClass.getResourceAsStream("/gps-points.txt")
-      new BufferedReader(new InputStreamReader(is))
-    }
-
-    S.bracket(acquire) { br =>
-      import java.util.stream.Collectors
+    Resource.make {
+      Sync[F].delay(new BufferedReader(new InputStreamReader(getClass.getResourceAsStream("/gps-points.txt"))))
+    } { reader =>
+      import cats.implicits._
+      Sync[F].delay(reader.close()).handleErrorWith(_ => Sync[F].unit)
+    }.use { br =>
       import scala.collection.JavaConverters._
       import cats.implicits._
       br.lines().collect(Collectors.toList()).asScala.toList.flatMap(GpsPoint.fromCsv).pure[F]
-    }(br => S.delay(br.close()))
+    }
   }
 
   import cats.implicits._
