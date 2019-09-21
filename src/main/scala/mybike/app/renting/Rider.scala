@@ -9,7 +9,7 @@ import mybike.app.engine._
 import mybike.domain.{GpsPoint, LockId, Ride}
 
 class Rider[F[_]](
-  bikeRenting: BikeRentingAlg[F],
+  bikeRenting: BikeRentingAlgebra[F],
   planner: PlannerAlg[F],
   locks: LocksStoreAlg[F]
 )(

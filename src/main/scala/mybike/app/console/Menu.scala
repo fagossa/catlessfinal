@@ -10,7 +10,7 @@ class Menu[F[_]: Monad: Timer](
   gpsStore: GpsPointStoreAlg[F],
   lockStore: LocksStoreAlg[F],
   rider: Rider[F],
-  console: Console[F]
+  console: ColorfulConsole[F]
 ) {
 
   def mainMenu: F[ErrorOr[Unit]] = {
