@@ -3,14 +3,14 @@ package mybike.app.console
 import cats.{Applicative, Monad}
 import cats.effect.Timer
 import mybike.ErrorOr
-import mybike.app.renting.{GpsPointStoreAlg, LocksStoreAlg, Rider}
+import mybike.app.renting.{GpsPointStoreAlg, LocksStoreAlg, RiderAlg}
 import mybike.domain.{GpsPoint, Lock, Ride}
 
 class Menu[F[_]: Monad: Timer](
   gpsStore: GpsPointStoreAlg[F],
   lockStore: LocksStoreAlg[F],
-  rider: Rider[F],
-  console: ColorfulConsole[F]
+  rider: RiderAlg[F],
+  console: ConsoleAlg[F]
 ) {
 
   def mainMenu: F[ErrorOr[Unit]] = {

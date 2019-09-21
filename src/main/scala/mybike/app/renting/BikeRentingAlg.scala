@@ -4,17 +4,17 @@ import cats.effect.Sync
 import mybike.ErrorOr
 import mybike.domain.{Lock, LockId}
 
-trait BikeRentingAlgebra[F[_]] {
+trait BikeRentingAlg[F[_]] {
   def rent(lockId: LockId): F[ErrorOr[LockId]]
   def release(lockId: LockId): F[ErrorOr[Unit]]
 }
 
-object BikeRentingAlgebra {
+object BikeRentingAlg {
 
   def create[F[_]: Sync](
     lockStore: LocksStoreAlg[F],
     gpsPointStore: GpsPointStoreAlg[F]
-  ): BikeRentingAlgebra[F] = new BikeRentingAlgebra[F] {
+  ): BikeRentingAlg[F] = new BikeRentingAlg[F] {
 
     override def rent(lockId: LockId): F[ErrorOr[LockId]] = {
       import cats.implicits._

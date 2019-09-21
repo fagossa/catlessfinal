@@ -4,7 +4,7 @@ import cats.effect.Sync
 
 import scala.util.Try
 
-trait ColorfulConsole[F[_]] {
+trait ConsoleAlg[F[_]] {
   def readLn: F[String]
   def readInt: F[Option[Int]]
   def putStrLn(str: String): F[Unit]
@@ -14,9 +14,9 @@ trait ColorfulConsole[F[_]] {
   def putBoldLine(str: String): F[Unit]
 }
 
-object ColorfulConsole {
+object ConsoleAlg {
 
-  def create[F[_]: Sync](): ColorfulConsole[F] = new ColorfulConsole[F] {
+  def create[F[_]: Sync](): ConsoleAlg[F] = new ConsoleAlg[F] {
 
     import scala.io.StdIn.readLine
     override def readLn: F[String] = Sync[F].delay {

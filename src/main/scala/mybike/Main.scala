@@ -4,9 +4,9 @@ import java.util.UUID
 
 import cats.effect.concurrent.Ref
 import cats.effect._
-import mybike.app.console.{ColorfulConsole, Menu}
-import mybike.app.engine.MemPlannerInterpreter
-import mybike.app.renting.{BikeRentingAlgebra, MemGpsPointStoreInterpreter, MemLocksStoreStore, Rider}
+import mybike.app.console.{ConsoleAlg, Menu}
+import mybike.app.engine.PlannerAlg
+import mybike.app.renting.{BikeRentingAlg, GpsPointStoreAlg, LocksStoreAlg, RiderAlg}
 import mybike.domain.{Lock, LockId}
 
 object Main extends IOApp {
@@ -27,16 +27,17 @@ object Main extends IOApp {
 
   def program(locks: Lock*): IO[ErrorOr[Unit]] =
     for {
-      gpsStore <- IO.pure(new MemGpsPointStoreInterpreter[IO]())
+      gpsStore <- IO.pure(GpsPointStoreAlg.createFileStoreInterpreter[IO])
       lockStore <- for {
         state <- Ref.of[IO, Map[LockId, Lock]](locks.map(lock => (lock.id, lock)).toMap)
-        resp  <- IO.pure(new MemLocksStoreStore[IO](state))
+        resp  <- IO.pure(LocksStoreAlg.createMemStoreInterpreter[IO](state))
       } yield resp
-      renting  <- IO.pure(BikeRentingAlgebra.create[IO](lockStore, gpsStore))
-      planner  <- IO.pure(new MemPlannerInterpreter[IO]())
-      rider    <- IO.pure(new Rider(renting, planner, lockStore))
-      console  <- IO.pure(ColorfulConsole.create[IO]())
+      renting  <- IO.pure(BikeRentingAlg.create[IO](lockStore, gpsStore))
+      planner  <- IO.pure(PlannerAlg.createMemInterpreter[IO])
+      rider    <- IO.pure(new RiderAlg(renting, planner, lockStore))
+      console  <- IO.pure(ConsoleAlg.create[IO]())
       cli      <- IO.pure(new Menu[IO](gpsStore, lockStore, rider, console))
       response <- cli.mainMenu
     } yield response
+
 }

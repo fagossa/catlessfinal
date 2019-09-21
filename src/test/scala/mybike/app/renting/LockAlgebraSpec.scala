@@ -15,14 +15,14 @@ class LockAlgebraSpec extends AsyncFunSuite with Matchers with LockFixture {
     IOAssertion {
       for {
         ref       <- Ref.of[IO, Map[LockId, Lock]](Map.empty[LockId, Lock])
-        lockStore <- IO.pure(new MemLocksStoreStore[IO](ref))
+        lockStore <- IO.pure(LocksStoreAlg.createMemStoreInterpreter[IO](ref))
         _         <- lockStore.save(anOpenLock())
         _         <- lockStore.save(anOpenLock())
         allLocks  <- lockStore.findAll
         rs <- IO {
           allLocks should have size 2
         }
-      } yield (rs)
+      } yield rs
     }
   }
 
@@ -31,14 +31,14 @@ class LockAlgebraSpec extends AsyncFunSuite with Matchers with LockFixture {
       val lock = anOpenLock()
       for {
         ref       <- Ref.of[IO, Map[LockId, Lock]](Map.empty[LockId, Lock])
-        lockStore <- IO.pure(new MemLocksStoreStore[IO](ref))
+        lockStore <- IO.pure(LocksStoreAlg.createMemStoreInterpreter[IO](ref))
         _         <- lockStore.save(lock)
         _         <- lockStore.disable(lock.id)
         foundLock <- lockStore.find(lock.id).map(_.get)
         rs <- IO {
           foundLock.isOpen shouldBe false
         }
-      } yield (rs)
+      } yield rs
     }
   }
 }

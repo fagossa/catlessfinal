@@ -8,8 +8,8 @@ import mybike.ErrorOr
 import mybike.app.engine._
 import mybike.domain.{GpsPoint, LockId, Ride}
 
-class Rider[F[_]](
-  bikeRenting: BikeRentingAlgebra[F],
+final class RiderAlg[F[_]](
+  bikeRenting: BikeRentingAlg[F],
   planner: PlannerAlg[F],
   locks: LocksStoreAlg[F]
 )(
