@@ -1,12 +1,11 @@
 package mybike.app.renting
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 
 import scala.concurrent.Future
 import org.scalatest._
 
-import mybike.domain.{Lock, LockId}
+import mybike.domain.Lock
 import mybike.app.fixtures.LockFixture
 
 class LockAlgebraSpec extends AsyncFunSuite with Matchers with LockFixture {
@@ -14,8 +13,7 @@ class LockAlgebraSpec extends AsyncFunSuite with Matchers with LockFixture {
   test("LockStore - add locks") {
     IOAssertion {
       for {
-        ref       <- Ref.of[IO, Map[LockId, Lock]](Map.empty[LockId, Lock])
-        lockStore <- IO.pure(LocksStoreAlg.createMemStoreInterpreter[IO](ref))
+        lockStore <- LocksStoreAlg.createMemStoreInterpreter[IO](List.empty[Lock])
         _         <- lockStore.save(anOpenLock())
         _         <- lockStore.save(anOpenLock())
         allLocks  <- lockStore.findAll
@@ -30,8 +28,7 @@ class LockAlgebraSpec extends AsyncFunSuite with Matchers with LockFixture {
     IOAssertion {
       val lock = anOpenLock()
       for {
-        ref       <- Ref.of[IO, Map[LockId, Lock]](Map.empty[LockId, Lock])
-        lockStore <- IO.pure(LocksStoreAlg.createMemStoreInterpreter[IO](ref))
+        lockStore <- LocksStoreAlg.createMemStoreInterpreter[IO](List.empty[Lock])
         _         <- lockStore.save(lock)
         _         <- lockStore.disable(lock.id)
         foundLock <- lockStore.find(lock.id).map(_.get)

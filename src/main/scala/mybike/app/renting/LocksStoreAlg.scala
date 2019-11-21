@@ -14,12 +14,20 @@ object LocksStoreAlg {
 
   import cats.effect.Sync
   import cats.effect.concurrent.Ref
+  import cats.implicits._
 
-  def createMemStoreInterpreter[F[_]](ref: Ref[F, Map[LockId, Lock]])(
+  def createMemStoreInterpreter[F[_]](locks: List[Lock])(
+    implicit S: Sync[F]
+  ): F[LocksStoreAlg[F]] = {
+    val initialContent: Map[LockId, Lock] = locks.map(lock => (lock.id, lock)).toMap
+    Ref
+      .of[F, Map[LockId, Lock]](initialContent)
+      .map(createFromRef[F](_))
+  }
+
+  private def createFromRef[F[_]](ref: Ref[F, Map[LockId, Lock]])(
     implicit S: Sync[F]
   ): LocksStoreAlg[F] = new LocksStoreAlg[F] {
-
-    import cats.implicits._
 
     override def findAll: F[Vector[Lock]] = ref.get.map(_.values.toVector)
 

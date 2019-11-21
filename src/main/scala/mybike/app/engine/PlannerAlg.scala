@@ -18,7 +18,7 @@ trait PlannerAlg[F[_]] {
 
 object PlannerAlg {
 
-  def createMemInterpreter[F[_]: Sync]: PlannerAlg[F] = new PlannerAlg[F] {
+  def makeInMemory[F[_]: Sync]: PlannerAlg[F] = new PlannerAlg[F] {
     override def execute(request: PlannerRequest): PlannerChannel = {
       buildRequestPlanner(request)
     }

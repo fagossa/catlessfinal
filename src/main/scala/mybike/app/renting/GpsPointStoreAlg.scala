@@ -11,11 +11,11 @@ trait GpsPointStoreAlg[F[_]] {
   def findMostPopularTuple: F[Option[(GpsPoint, GpsPoint)]]
 }
 
-import cats.effect.Sync
 object GpsPointStoreAlg {
+  import cats.effect.Sync
+  def makeFileStore[F[_]](implicit S: Sync[F]): GpsPointStoreAlg[F] = new GpsPointStoreAlg[F] {
 
-  def createFileStoreInterpreter[F[_]](implicit S: Sync[F]): GpsPointStoreAlg[F] = new GpsPointStoreAlg[F] {
-
+    //
     override def findAll: F[List[GpsPoint]] = {
       import java.io.BufferedReader
       Resource.make {
@@ -37,5 +37,4 @@ object GpsPointStoreAlg {
         case _ => None
       }
   }
-
 }

@@ -11,7 +11,7 @@ trait BikeRentingAlg[F[_]] {
 
 object BikeRentingAlg {
 
-  def create[F[_]: Sync](
+  def make[F[_]: Sync](
     lockStore: LocksStoreAlg[F],
     gpsPointStore: GpsPointStoreAlg[F]
   ): BikeRentingAlg[F] = new BikeRentingAlg[F] {

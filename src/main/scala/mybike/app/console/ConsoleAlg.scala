@@ -16,7 +16,7 @@ trait ConsoleAlg[F[_]] {
 
 object ConsoleAlg {
 
-  def create[F[_]: Sync](): ConsoleAlg[F] = new ConsoleAlg[F] {
+  def make[F[_]: Sync](): ConsoleAlg[F] = new ConsoleAlg[F] {
 
     import scala.io.StdIn.readLine
     override def readLn: F[String] = Sync[F].delay {
